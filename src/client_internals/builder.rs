@@ -25,6 +25,7 @@ pub struct JenkinsBuilder {
     user: Option<User>,
     csrf_enabled: bool,
     depth: u8,
+    client: Option<Client>,
 }
 
 impl JenkinsBuilder {
@@ -41,6 +42,7 @@ impl JenkinsBuilder {
             user: None,
             csrf_enabled: true,
             depth: 1,
+            client: None,
         }
     }
 
@@ -54,21 +56,37 @@ impl JenkinsBuilder {
             return Err(url::ParseError::EmptyHost.into());
         }
 
-        Ok(Jenkins {
-            url: self.url,
-            client: Client::builder().build()?,
-            user: self.user,
-            csrf_enabled: self.csrf_enabled,
-            depth: self.depth,
-        })
+        if let Some(client) = self.client {
+            Ok(Jenkins {
+                url: self.url,
+                client,
+                user: self.user,
+                csrf_enabled: self.csrf_enabled,
+                depth: self.depth,
+            })
+        } else {
+            Ok(Jenkins {
+                url: self.url,
+                client: Client::builder().build()?,
+                user: self.user,
+                csrf_enabled: self.csrf_enabled,
+                depth: self.depth,
+            })
+        }
     }
 
     /// Specify the user to use for authorizing queries
     pub fn with_user(mut self, login: &str, password: Option<&str>) -> Self {
         self.user = Some(User {
             username: login.to_string(),
-            password: password.map(std::string::ToString::to_string),
+            password: password.map(ToString::to_string),
         });
+        self
+    }
+
+    /// Specify the client to use for reqwest
+    pub fn with_client(mut self, cli: Client) -> Self {
+        self.client = Some(cli);
         self
     }
 

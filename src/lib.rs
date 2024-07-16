@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 #![deny(
     warnings,
     missing_debug_implementations,
